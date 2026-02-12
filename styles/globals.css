@@ -112,3 +112,14 @@ li {
   margin-bottom: 12px;
   line-height: 1.4;
 }
+
+
+.action-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.safe-actions strong {
+  color: #fff;
+}

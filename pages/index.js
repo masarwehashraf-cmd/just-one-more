@@ -8,7 +8,7 @@ export default function Home() {
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
   const [detectedIp, setDetectedIp] = useState('');
-
+  const [requestStatus, setRequestStatus] = useState({});
 
   useEffect(() => {
     async function loadNetworkInfo() {
@@ -53,12 +53,66 @@ export default function Home() {
     }
   }
 
+  async function sendControlRequest(device) {
+    try {
+      const response = await fetch('/api/control-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ip: device.ip,
+          requestedAction: `Managed assistance for ${device.suggestedType}`,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Unable to create request');
+      }
+
+      setRequestStatus((current) => ({
+        ...current,
+        [device.ip]: {
+          id: data.id,
+          status: data.status,
+          acceptUrl: data.acceptUrl,
+        },
+      }));
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  }
+
+  async function refreshRequest(ip) {
+    const request = requestStatus[ip];
+    if (!request?.id) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/control-request?id=${request.id}`);
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Unable to refresh request');
+      }
+
+      setRequestStatus((current) => ({
+        ...current,
+        [ip]: {
+          ...current[ip],
+          status: data.status,
+          consentToken: data.consentToken,
+        },
+      }));
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  }
+
   return (
     <main className="container">
       <h1>Wi-Fi Device Scanner (Authorized Use)</h1>
       <p className="subheading">
-        Scan your current network to discover active devices. This tool is for inventory and approved
-        administration only.
+        Scan your current network, discover computers/phones, then request consent before any managed
+        support action.
       </p>
       {detectedIp && <p className="detected">Detected local IP: {detectedIp}</p>}
 
@@ -116,23 +170,47 @@ export default function Home() {
             <p>No responsive devices found in this range.</p>
           ) : (
             <ul>
-              {result.detected.map((device) => (
-                <li key={device.ip}>
-                  <strong>{device.ip}</strong> — open ports: {device.openPorts.join(', ')} —{' '}
-                  {device.suggestedType}
-                  <div className="safe-actions">Allowed actions: {device.safeActions.join(' • ')}</div>
-                  {device.managementLinks?.length > 0 && (
-                    <div className="safe-actions">
-                      Quick links:{' '}
-                      {device.managementLinks.map((link) => (
-                        <a key={link} href={link} target="_blank" rel="noreferrer">
-                          {link}
-                        </a>
-                      ))}
+              {result.detected.map((device) => {
+                const req = requestStatus[device.ip];
+                return (
+                  <li key={device.ip}>
+                    <strong>{device.ip}</strong> — open ports: {device.openPorts.join(', ')} —{' '}
+                    {device.suggestedType}
+                    <div className="safe-actions">Allowed actions: {device.safeActions.join(' • ')}</div>
+                    {device.managementLinks?.length > 0 && (
+                      <div className="safe-actions">
+                        Quick links:{' '}
+                        {device.managementLinks.map((link) => (
+                          <a key={link} href={link} target="_blank" rel="noreferrer">
+                            {link}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="action-row">
+                      <button type="button" onClick={() => sendControlRequest(device)}>
+                        Send Consent Request
+                      </button>
+                      {req?.id && (
+                        <button type="button" onClick={() => refreshRequest(device.ip)}>
+                          Refresh Status
+                        </button>
+                      )}
                     </div>
-                  )}
-                </li>
-              ))}
+
+                    {req?.id && (
+                      <div className="safe-actions">
+                        Request status: <strong>{req.status}</strong>
+                        <a href={req.acceptUrl} target="_blank" rel="noreferrer">
+                          Open Accept Page
+                        </a>
+                        {req.consentToken && <span>Consent token: {req.consentToken}</span>}
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
 
@@ -141,10 +219,10 @@ export default function Home() {
       )}
 
       <section className="panel left">
-        <h2>About shutdown / screen mirroring</h2>
+        <h2>Important</h2>
         <p>
-          If you own/manage the devices, use the official method: Apple MDM, Android Enterprise,
-          Windows Intune, Linux SSH/Ansible, or vendor smart-device apps with signed-in accounts.
+          This is consent-first workflow only. You can only proceed after the device owner accepts.
+          For iPhone management, use Apple-approved MDM/Configurator flows.
         </p>
       </section>
     </main>

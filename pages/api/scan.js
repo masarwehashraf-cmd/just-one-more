@@ -1,6 +1,6 @@
 import net from 'net';
 
-const commonPorts = [22, 80, 443, 8080];
+const commonPorts = [22, 80, 443, 8080, 62078];
 
 function probePort(host, port, timeoutMs = 350) {
   return new Promise((resolve) => {
@@ -44,6 +44,14 @@ function managementLinksFor(ip, openPorts) {
 }
 
 function classifyDevice(ip, openPorts) {
+  if (openPorts.includes(62078)) {
+    return {
+      suggestedType: 'Likely iPhone/iPad (lockdown service visible)',
+      safeActions: ['Use Apple Configurator/MDM', 'Request user-approved pairing'],
+      managementLinks: managementLinksFor(ip, openPorts),
+    };
+  }
+
   if (openPorts.includes(22)) {
     return {
       suggestedType: 'Likely computer / Linux device',
@@ -170,6 +178,6 @@ export default async function handler(req, res) {
     scanned: hosts.length,
     detected,
     controlNotice:
-      'Direct shutdown, screen mirroring, or remote control requires explicit consent and vendor-approved management tools (MDM, EMM, or authenticated admin APIs).',
+      'Any control action must be consent-based. Device owners must explicitly accept requests before managed access workflows.',
   });
 }
