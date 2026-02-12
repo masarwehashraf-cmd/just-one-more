@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 export default function Home() {
   const [subnet, setSubnet] = useState('192.168.1.0');
   const [fromHost, setFromHost] = useState(1);
-  const [toHost, setToHost] = useState(30);
+  const [toHost, setToHost] = useState(80);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
@@ -165,6 +165,12 @@ export default function Home() {
             Subnet used: <strong>{result.subnetUsed}</strong>
           </p>
           <p>Hosts scanned: {result.scanned}</p>
+          {result.diagnostics && (
+            <p className="detected">
+              Diagnostics → Ping found: {result.diagnostics.pingDetected}, Port found:{' '}
+              {result.diagnostics.portDetected}, ARP hints: {result.diagnostics.arpCandidatesInRange}
+            </p>
+          )}
 
           {result.detected.length === 0 ? (
             <p>No responsive devices found in this range.</p>
@@ -174,9 +180,13 @@ export default function Home() {
                 const req = requestStatus[device.ip];
                 return (
                   <li key={device.ip}>
-                    <strong>{device.ip}</strong> — open ports: {device.openPorts.join(', ')} —{' '}
-                    {device.suggestedType}
+                    <strong>{device.ip}</strong> —{' '}
+                    {device.openPorts.length > 0
+                      ? `open ports: ${device.openPorts.join(', ')}`
+                      : 'no common ports open'}{' '}
+                    — {device.suggestedType}
                     <div className="safe-actions">Allowed actions: {device.safeActions.join(' • ')}</div>
+                    <div className="safe-actions">Discovery source: {device.discoverySource}</div>
                     {device.managementLinks?.length > 0 && (
                       <div className="safe-actions">
                         Quick links:{' '}

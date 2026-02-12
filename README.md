@@ -5,9 +5,20 @@ Simple Next.js app for **authorized local network device discovery**.
 ## What it does
 
 - Detects local private IPv4 on the server (`/api/network`) and auto-fills subnet for scanning
-- Scans host ranges and lists responsive devices (including likely iPhone/iPad hints when port `62078` is visible)
+- Scans host ranges and combines 3 discovery signals:
+  - common TCP ports (`22`, `80`, `443`, `8080`, `62078`)
+  - ICMP ping response
+  - ARP cache hints
+- Lists responsive devices, including likely iPhone/iPad hinting (`62078`) and ping-only clients
 - Shows quick management links for approved admin use (`http://`, `https://`, `ssh://`)
 - Lets you send a **consent request** per device and track accepted/rejected status
+
+## Why devices may be missed
+
+- Some phones block ping while sleeping / low power mode.
+- Guest Wi-Fi and AP isolation can hide peers.
+- Firewalls can block ping/ports.
+- Run the app on a machine connected to the same LAN/VLAN as target devices.
 
 ## Consent-based control flow
 
