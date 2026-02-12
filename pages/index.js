@@ -3,12 +3,12 @@ import { useState } from 'react';
 export default function Home() {
   const [subnet, setSubnet] = useState('192.168.1.0');
   const [fromHost, setFromHost] = useState(1);
-  const [toHost, setToHost] = useState(20);
+  const [toHost, setToHost] = useState(30);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
 
-  async function runScan() {
+  async function runScan(useCurrentConnection = false) {
     setLoading(true);
     setError('');
     setResult(null);
@@ -17,7 +17,7 @@ export default function Home() {
       const response = await fetch('/api/scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subnet, fromHost, toHost }),
+        body: JSON.stringify({ subnet, fromHost, toHost, useCurrentConnection }),
       });
 
       const data = await response.json();
@@ -25,6 +25,7 @@ export default function Home() {
         throw new Error(data.error || 'Scan failed');
       }
 
+      setSubnet(data.subnetUsed);
       setResult(data);
     } catch (scanError) {
       setError(scanError.message);
@@ -35,13 +36,19 @@ export default function Home() {
 
   return (
     <main className="container">
-      <h1>Authorized Device Scanner</h1>
+      <h1>Wi-Fi Device Scanner (Authorized Use)</h1>
       <p className="subheading">
-        This app helps you inventory devices on your own network. It does <strong>not</strong> provide
-        unauthorized shutdown or control features.
+        Scan your current network to discover active devices. This tool is for inventory and approved
+        administration only.
       </p>
 
       <section className="panel">
+        <div className="button-row">
+          <button type="button" onClick={() => runScan(true)} disabled={loading}>
+            {loading ? 'Scanning...' : 'Auto Detect Wi-Fi Subnet + Scan'}
+          </button>
+        </div>
+
         <label>
           Subnet (example: 192.168.1.0)
           <input value={subnet} onChange={(event) => setSubnet(event.target.value)} />
@@ -70,8 +77,8 @@ export default function Home() {
           </label>
         </div>
 
-        <button type="button" onClick={runScan} disabled={loading}>
-          {loading ? 'Scanning...' : 'Scan Devices'}
+        <button type="button" onClick={() => runScan(false)} disabled={loading}>
+          {loading ? 'Scanning...' : 'Scan Using Manual Subnet'}
         </button>
       </section>
 
@@ -80,6 +87,9 @@ export default function Home() {
       {result && (
         <section className="panel left">
           <p className="warning">{result.warning}</p>
+          <p>
+            Subnet used: <strong>{result.subnetUsed}</strong>
+          </p>
           <p>Hosts scanned: {result.scanned}</p>
 
           {result.detected.length === 0 ? (
@@ -90,18 +100,21 @@ export default function Home() {
                 <li key={device.ip}>
                   <strong>{device.ip}</strong> — open ports: {device.openPorts.join(', ')} —{' '}
                   {device.suggestedType}
+                  <div className="safe-actions">Allowed actions: {device.safeActions.join(' • ')}</div>
                 </li>
               ))}
             </ul>
           )}
+
+          <p className="notice">{result.controlNotice}</p>
         </section>
       )}
 
       <section className="panel left">
-        <h2>About remote actions</h2>
+        <h2>About shutdown / screen mirroring</h2>
         <p>
-          For shutdown/restart actions, use official management systems with explicit consent (MDM,
-          enterprise endpoint management, or your own authenticated API).
+          If you own/manage the devices, use the official method: Apple MDM, Android Enterprise,
+          Windows Intune, Linux SSH/Ansible, or vendor smart-device apps with signed-in accounts.
         </p>
       </section>
     </main>

@@ -4,17 +4,18 @@ Simple Next.js app for **authorized local network device discovery**.
 
 ## What it does
 
-- Scans a subnet range (example `192.168.1.1` to `192.168.1.20`)
-- Checks a few common ports (`22`, `80`, `443`, `8080`)
-- Shows responsive hosts and a simple guessed device type
+- Auto-detects subnet from the current connection (when available) and scans a host range
+- Allows manual subnet entry if automatic detection is unavailable
+- Checks common ports (`22`, `80`, `443`, `8080`)
+- Shows responsive hosts, guessed device type, and approved management action suggestions
 
 ## What it does not do
 
 - No unauthorized remote control
 - No exploit behavior
-- No "shutdown any phone" functionality
+- No direct "shutdown any phone" or stealth screen-mirroring functionality
 
-For shutdown/restart workflows, use official endpoint-management solutions with explicit permission.
+For power actions (shutdown/restart) or mirroring, use official signed-in management systems with explicit user/owner consent.
 
 ## Run
 

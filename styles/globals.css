@@ -6,7 +6,7 @@ body {
 }
 
 .container {
-  max-width: 800px;
+  max-width: 840px;
   margin: 0 auto;
   padding: 40px 20px;
 }
@@ -26,6 +26,12 @@ body {
 
 .left {
   text-align: left;
+}
+
+.button-row {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 12px;
 }
 
 .range-row {
@@ -70,6 +76,17 @@ button:disabled {
   color: #f9d27e;
 }
 
+.notice {
+  margin-top: 14px;
+  color: #b9d8ff;
+}
+
+.safe-actions {
+  margin-top: 6px;
+  color: #b9d8ff;
+  font-size: 13px;
+}
+
 .error {
   color: #ff8484;
 }
@@ -80,5 +97,6 @@ ul {
 }
 
 li {
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+  line-height: 1.4;
 }
