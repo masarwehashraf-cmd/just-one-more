@@ -16,6 +16,11 @@ body {
   line-height: 1.5;
 }
 
+.detected {
+  color: #8ad7ff;
+  margin-top: 8px;
+}
+
 .panel {
   margin-top: 20px;
   padding: 18px;
@@ -85,6 +90,13 @@ button:disabled {
   margin-top: 6px;
   color: #b9d8ff;
   font-size: 13px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.safe-actions a {
+  color: #8ad7ff;
 }
 
 .error {

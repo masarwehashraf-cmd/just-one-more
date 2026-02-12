@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function Home() {
   const [subnet, setSubnet] = useState('192.168.1.0');
@@ -7,6 +7,25 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
+  const [detectedIp, setDetectedIp] = useState('');
+
+
+  useEffect(() => {
+    async function loadNetworkInfo() {
+      try {
+        const response = await fetch('/api/network');
+        const data = await response.json();
+        if (response.ok && data?.primary?.subnet) {
+          setSubnet(data.primary.subnet);
+          setDetectedIp(data.primary.ip);
+        }
+      } catch (_error) {
+        // Silent fallback to manual subnet entry.
+      }
+    }
+
+    loadNetworkInfo();
+  }, []);
 
   async function runScan(useCurrentConnection = false) {
     setLoading(true);
@@ -41,6 +60,7 @@ export default function Home() {
         Scan your current network to discover active devices. This tool is for inventory and approved
         administration only.
       </p>
+      {detectedIp && <p className="detected">Detected local IP: {detectedIp}</p>}
 
       <section className="panel">
         <div className="button-row">
@@ -101,6 +121,16 @@ export default function Home() {
                   <strong>{device.ip}</strong> — open ports: {device.openPorts.join(', ')} —{' '}
                   {device.suggestedType}
                   <div className="safe-actions">Allowed actions: {device.safeActions.join(' • ')}</div>
+                  {device.managementLinks?.length > 0 && (
+                    <div className="safe-actions">
+                      Quick links:{' '}
+                      {device.managementLinks.map((link) => (
+                        <a key={link} href={link} target="_blank" rel="noreferrer">
+                          {link}
+                        </a>
+                      ))}
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>

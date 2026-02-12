@@ -25,11 +25,30 @@ function probePort(host, port, timeoutMs = 350) {
   });
 }
 
-function classifyDevice(openPorts) {
+function managementLinksFor(ip, openPorts) {
+  const links = [];
+
+  if (openPorts.includes(443)) {
+    links.push(`https://${ip}`);
+  }
+
+  if (openPorts.includes(80) || openPorts.includes(8080)) {
+    links.push(`http://${ip}`);
+  }
+
+  if (openPorts.includes(22)) {
+    links.push(`ssh://${ip}`);
+  }
+
+  return links;
+}
+
+function classifyDevice(ip, openPorts) {
   if (openPorts.includes(22)) {
     return {
       suggestedType: 'Likely computer / Linux device',
       safeActions: ['Use SSH with credentials', 'Manage with endpoint-management tools'],
+      managementLinks: managementLinksFor(ip, openPorts),
     };
   }
 
@@ -37,12 +56,14 @@ function classifyDevice(openPorts) {
     return {
       suggestedType: 'Likely smart device or local admin panel',
       safeActions: ['Open official admin page', 'Use vendor app for approved controls'],
+      managementLinks: managementLinksFor(ip, openPorts),
     };
   }
 
   return {
     suggestedType: 'Web-capable device',
     safeActions: ['Use authenticated web admin', 'Use approved MDM / IT tooling'],
+    managementLinks: managementLinksFor(ip, openPorts),
   };
 }
 
@@ -57,7 +78,7 @@ async function detectDevice(ip) {
   return {
     ip,
     openPorts,
-    ...classifyDevice(openPorts),
+    ...classifyDevice(ip, openPorts),
   };
 }
 
